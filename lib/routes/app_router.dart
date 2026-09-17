@@ -6,8 +6,26 @@ import '../core/constants/app_constants.dart';
 import '../data/providers/data_providers.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/customer/presentation/customer_dashboard_screen.dart';
+import '../features/customer/presentation/customer_create_request_screen.dart';
+import '../features/customer/presentation/customer_equipment_info_screen.dart';
+import '../features/customer/presentation/customer_notifications_screen.dart';
+import '../features/customer/presentation/customer_qr_scan_screen.dart';
+import '../features/customer/presentation/customer_request_detail_screen.dart';
+import '../features/customer/presentation/customer_tracking_screen.dart';
 import '../features/splash/presentation/splash_screen.dart';
 import '../features/technician/presentation/technician_dashboard_screen.dart';
+import '../features/technician/presentation/technician_task_detail_screen.dart';
+import '../features/technician/presentation/technician_tasks_screen.dart';
+import '../features/technician/presentation/technician_qr_scan_screen.dart';
+import '../features/service_report/presentation/screens/sr_equipment_info_screen.dart';
+import '../features/service_report/presentation/screens/sr_start_service_screen.dart';
+import '../features/service_report/presentation/screens/sr_problem_solution_screen.dart';
+import '../features/service_report/presentation/screens/sr_parts_screen.dart';
+import '../features/service_report/presentation/screens/sr_cost_screen.dart';
+import '../features/service_report/presentation/screens/sr_end_service_screen.dart';
+import '../features/service_report/presentation/screens/sr_signature_screen.dart';
+import '../features/service_report/presentation/screens/sr_review_screen.dart';
+import '../features/service_report/presentation/screens/sr_completed_screen.dart';
 
 // ---------------------------------------------------------------------------
 // Route name constants
@@ -29,6 +47,7 @@ class AppRoutes {
   static const String customerCreateRequest = 'customer-create-request';
   static const String customerRequestDetail = 'customer-request-detail';
   static const String customerQrScan = 'customer-qr-scan';
+  static const String customerEquipmentInfo = 'customer-equipment-info';
   static const String customerTechnicianTracking = 'customer-technician-tracking';
   static const String customerNotifications = 'customer-notifications';
 
@@ -36,6 +55,7 @@ class AppRoutes {
   static const String technicianDashboard = 'technician-dashboard';
   static const String technicianTasks = 'technician-tasks';
   static const String technicianTaskDetail = 'technician-task-detail';
+  static const String technicianQrScan = 'technician-qr-scan';
   static const String technicianDailyActivity = 'technician-daily-activity';
   static const String technicianQuotation = 'technician-quotation';
 
@@ -107,7 +127,7 @@ GoRouter createRouter(ProviderContainer container) {
       if (user.isTechnician && location.startsWith('/customer/')) {
         return '/technician/dashboard';
       }
-      if (user.isCustomer && location.startsWith('/technician/')) {
+      if (user.isCustomer && (location.startsWith('/technician/') || location.startsWith('/service-report/'))) {
         return '/customer/dashboard';
       }
 
@@ -145,36 +165,48 @@ GoRouter createRouter(ProviderContainer container) {
       GoRoute(
         path: '/customer/create-request',
         name: AppRoutes.customerCreateRequest,
-        builder: (context, state) =>
-            const _ComingSoonScreen(label: 'Create Request', phase: 5),
+        builder: (context, state) {
+          final equipmentId = state.extra as int?;
+          return CustomerCreateRequestScreen(equipmentId: equipmentId ?? 0);
+        },
       ),
       GoRoute(
         path: '/customer/request/:id',
         name: AppRoutes.customerRequestDetail,
-        builder: (context, state) =>
-            const _ComingSoonScreen(label: 'Request Detail', phase: 5),
+        builder: (context, state) {
+          final idStr = state.pathParameters['id']!;
+          return CustomerRequestDetailScreen(requestId: int.parse(idStr));
+        },
       ),
       GoRoute(
         path: '/customer/qr-scan',
         name: AppRoutes.customerQrScan,
-        builder: (context, state) =>
-            const _ComingSoonScreen(label: 'QR Scan', phase: 5),
+        builder: (context, state) => const CustomerQrScanScreen(),
+      ),
+      GoRoute(
+        path: '/customer/equipment-info',
+        name: AppRoutes.customerEquipmentInfo,
+        builder: (context, state) {
+          final equipmentId = state.extra as int?;
+          return CustomerEquipmentInfoScreen(equipmentId: equipmentId ?? 0);
+        },
       ),
       GoRoute(
         path: '/customer/tracking/:id',
         name: AppRoutes.customerTechnicianTracking,
-        builder: (context, state) =>
-            const _ComingSoonScreen(label: 'Technician Tracking', phase: 5),
+        builder: (context, state) {
+          final idStr = state.pathParameters['id']!;
+          return CustomerTrackingScreen(requestId: int.parse(idStr));
+        },
       ),
       GoRoute(
         path: '/customer/notifications',
         name: AppRoutes.customerNotifications,
-        builder: (context, state) =>
-            const _ComingSoonScreen(label: 'Notifications', phase: 5),
+        builder: (context, state) => const CustomerNotificationsScreen(),
       ),
 
       // -----------------------------------------------------------------------
-      // Technician (Phase 3: dashboard placeholder; Phase 6: full features)
+      // Technician (Phase 5: full features)
       // -----------------------------------------------------------------------
       GoRoute(
         path: '/technician/dashboard',
@@ -184,14 +216,23 @@ GoRouter createRouter(ProviderContainer container) {
       GoRoute(
         path: '/technician/tasks',
         name: AppRoutes.technicianTasks,
-        builder: (context, state) =>
-            const _ComingSoonScreen(label: 'Assigned Tasks', phase: 6),
+        builder: (context, state) => const TechnicianTasksScreen(),
       ),
       GoRoute(
         path: '/technician/task/:id',
         name: AppRoutes.technicianTaskDetail,
-        builder: (context, state) =>
-            const _ComingSoonScreen(label: 'Task Detail', phase: 6),
+        builder: (context, state) {
+          final id = int.parse(state.pathParameters['id']!);
+          return TechnicianTaskDetailScreen(taskId: id);
+        },
+      ),
+      GoRoute(
+        path: '/technician/qr-scan',
+        name: AppRoutes.technicianQrScan,
+        builder: (context, state) {
+          final taskId = state.extra as int? ?? 0;
+          return TechnicianQrScanScreen(taskId: taskId);
+        },
       ),
       GoRoute(
         path: '/technician/daily-activity',
@@ -207,61 +248,61 @@ GoRouter createRouter(ProviderContainer container) {
       ),
 
       // -----------------------------------------------------------------------
-      // Service Report flow (Phase 7)
+      // Service Report flow (Phase 6)
       // -----------------------------------------------------------------------
       GoRoute(
-        path: '/service-report/equipment-info',
+        path: '/service-report/equipment-info/:taskId',
         name: AppRoutes.srEquipmentInfo,
         builder: (context, state) =>
-            const _ComingSoonScreen(label: 'SR: Equipment Information', phase: 7),
+            SREquipmentInfoScreen(taskId: int.parse(state.pathParameters['taskId']!)),
       ),
       GoRoute(
-        path: '/service-report/start-service',
+        path: '/service-report/start-service/:taskId',
         name: AppRoutes.srStartService,
         builder: (context, state) =>
-            const _ComingSoonScreen(label: 'SR: Start Service', phase: 7),
+            SRStartServiceScreen(taskId: int.parse(state.pathParameters['taskId']!)),
       ),
       GoRoute(
-        path: '/service-report/problem-solution',
+        path: '/service-report/problem-solution/:taskId',
         name: AppRoutes.srProblemSolution,
         builder: (context, state) =>
-            const _ComingSoonScreen(label: 'SR: Problem & Solution', phase: 7),
+            SRProblemSolutionScreen(taskId: int.parse(state.pathParameters['taskId']!)),
       ),
       GoRoute(
-        path: '/service-report/parts',
+        path: '/service-report/parts/:taskId',
         name: AppRoutes.srParts,
         builder: (context, state) =>
-            const _ComingSoonScreen(label: 'SR: Parts', phase: 7),
+            SRPartsScreen(taskId: int.parse(state.pathParameters['taskId']!)),
       ),
       GoRoute(
-        path: '/service-report/cost',
+        path: '/service-report/cost/:taskId',
         name: AppRoutes.srCost,
         builder: (context, state) =>
-            const _ComingSoonScreen(label: 'SR: Cost', phase: 7),
+            SRCostScreen(taskId: int.parse(state.pathParameters['taskId']!)),
       ),
       GoRoute(
-        path: '/service-report/end-service',
+        path: '/service-report/end-service/:taskId',
         name: AppRoutes.srEndService,
         builder: (context, state) =>
-            const _ComingSoonScreen(label: 'SR: End Service', phase: 7),
+            SREndServiceScreen(taskId: int.parse(state.pathParameters['taskId']!)),
       ),
       GoRoute(
-        path: '/service-report/signature',
+        path: '/service-report/signature/:taskId',
         name: AppRoutes.srSignature,
         builder: (context, state) =>
-            const _ComingSoonScreen(label: 'SR: Digital Signature', phase: 7),
+            SRSignatureScreen(taskId: int.parse(state.pathParameters['taskId']!)),
       ),
       GoRoute(
-        path: '/service-report/review',
+        path: '/service-report/review/:taskId',
         name: AppRoutes.srReview,
         builder: (context, state) =>
-            const _ComingSoonScreen(label: 'SR: Review', phase: 7),
+            SRReviewScreen(taskId: int.parse(state.pathParameters['taskId']!)),
       ),
       GoRoute(
-        path: '/service-report/completed',
+        path: '/service-report/completed/:taskId',
         name: AppRoutes.srCompleted,
         builder: (context, state) =>
-            const _ComingSoonScreen(label: 'SR: Completed', phase: 7),
+            SRCompletedScreen(taskId: int.parse(state.pathParameters['taskId']!)),
       ),
     ],
 

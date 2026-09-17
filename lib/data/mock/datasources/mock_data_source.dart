@@ -6,6 +6,7 @@ import '../../../models/service_report_part_model.dart';
 import '../../../models/service_request_model.dart';
 import '../../../models/technician_task_model.dart';
 import '../../../models/user_model.dart';
+import '../../../models/customer_notification_model.dart';
 
 /// Provides realistic mock data for UI development before the API is ready.
 class MockDataSource {
@@ -192,6 +193,32 @@ class MockDataSource {
       travelRate: 50000.0,
       travelCost: 75000.0,
       othersCost: 20000.0,
+    ),
+  ];
+
+  // ---------------------------------------------------------------------------
+  // Customer Notifications
+  // ---------------------------------------------------------------------------
+  static final List<CustomerNotificationModel> customerNotifications = [
+    CustomerNotificationModel(
+      id: 1,
+      customerId: 1,
+      title: 'Ticket Created',
+      message: 'Your service request REQ-202609-001 has been received.',
+      serviceRequestId: 1,
+      ticketNumber: 'REQ-202609-001',
+      createdAt: DateTime.now().subtract(const Duration(days: 2)),
+      isRead: true,
+    ),
+    CustomerNotificationModel(
+      id: 2,
+      customerId: 1,
+      title: 'Technician Assigned',
+      message: 'John Technician has been assigned to REQ-202609-001.',
+      serviceRequestId: 1,
+      ticketNumber: 'REQ-202609-001',
+      createdAt: DateTime.now().subtract(const Duration(days: 1, hours: 2)),
+      isRead: false,
     ),
   ];
 }

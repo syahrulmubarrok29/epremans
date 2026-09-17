@@ -3,6 +3,8 @@ import 'package:sqflite/sqflite.dart';
 import '../../../models/equipment_model.dart';
 import '../../../models/service_report_model.dart';
 import '../../../models/service_report_part_model.dart';
+import '../../../models/service_request_model.dart';
+import '../../../models/technician_task_model.dart';
 import '../database/app_database.dart';
 import '../database/database_constants.dart';
 
@@ -41,7 +43,75 @@ class LocalDataSource {
     return null;
   }
 
+  Future<EquipmentModel?> getEquipmentByQrCode(String qrCode) async {
+    final db = await _db;
+    final results = await db.query(
+      DatabaseConstants.tableEquipment,
+      where: 'qr_code = ?',
+      whereArgs: [qrCode],
+    );
+    if (results.isNotEmpty) {
+      return EquipmentModel.fromMap(results.first);
+    }
+    return null;
+  }
+
   // ---------------------------------------------------------------------------
+
+  // Service Requests
+  // ---------------------------------------------------------------------------
+
+  Future<void> insertServiceRequest(ServiceRequestModel request) async {
+    final db = await _db;
+    await db.insert(
+      DatabaseConstants.tableServiceRequests,
+      request.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<ServiceRequestModel>> getServiceRequestsByCustomerId(int customerId) async {
+    final db = await _db;
+    final results = await db.query(
+      DatabaseConstants.tableServiceRequests,
+      where: 'customer_id = ?',
+      whereArgs: [customerId],
+    );
+    return results.map((e) => ServiceRequestModel.fromMap(e)).toList();
+  }
+
+  // ---------------------------------------------------------------------------
+
+  // Technician Tasks
+  // ---------------------------------------------------------------------------
+
+  Future<List<TechnicianTaskModel>> getTechnicianTasksByTechnicianId(int technicianId) async {
+    final db = await _db;
+    final results = await db.query(
+      DatabaseConstants.tableTechnicianTasks,
+      where: 'technician_id = ?',
+      whereArgs: [technicianId],
+      orderBy: 'assigned_at DESC',
+    );
+    return results.map((e) => TechnicianTaskModel.fromMap(e)).toList();
+  }
+
+  Future<int> updateTechnicianTaskStatus(int taskId, String status, {DateTime? completedAt}) async {
+    final db = await _db;
+    final values = <String, dynamic>{'status': status};
+    if (completedAt != null) {
+      values['completed_at'] = completedAt.toIso8601String();
+    }
+    return await db.update(
+      DatabaseConstants.tableTechnicianTasks,
+      values,
+      where: 'id = ?',
+      whereArgs: [taskId],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+
   // Service Reports
   // ---------------------------------------------------------------------------
 

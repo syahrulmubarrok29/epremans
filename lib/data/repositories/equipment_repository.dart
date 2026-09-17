@@ -28,4 +28,16 @@ class EquipmentRepository {
   Future<void> syncEquipmentToLocal(EquipmentModel equipment) async {
     await localDataSource.insertEquipment(equipment);
   }
+
+  /// Fetches equipment by QR Code (Checks Mock, then Local)
+  Future<EquipmentModel?> getEquipmentByQrCode(String qrCode) async {
+    // 1. Try mock data
+    try {
+      final mock = MockDataSource.equipment.firstWhere((e) => e.qrCode == qrCode);
+      return mock;
+    } catch (_) {}
+
+    // 2. Try local SQLite
+    return await localDataSource.getEquipmentByQrCode(qrCode);
+  }
 }

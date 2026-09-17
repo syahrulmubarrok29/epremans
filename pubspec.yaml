@@ -54,6 +54,10 @@ dependencies:
   intl: ^0.20.0
   path: ^1.9.1
 
+  # Barcode / QR Scanner (Phase 4: Customer equipment scan)
+  mobile_scanner: ^6.0.0
+  signature: ^6.4.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

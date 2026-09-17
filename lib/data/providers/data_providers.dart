@@ -12,6 +12,7 @@ import '../repositories/equipment_repository.dart';
 import '../repositories/service_report_repository.dart';
 import '../repositories/service_request_repository.dart';
 import '../repositories/technician_task_repository.dart';
+import '../repositories/customer_notification_repository.dart';
 
 // ---------------------------------------------------------------------------
 // External Dependencies
@@ -54,12 +55,14 @@ final equipmentRepositoryProvider = Provider<EquipmentRepository>((ref) {
 final serviceRequestRepositoryProvider = Provider<ServiceRequestRepository>((ref) {
   return ServiceRequestRepository(
     remoteDataSource: ref.watch(remoteDataSourceProvider),
+    localDataSource: ref.watch(localDataSourceProvider),
   );
 });
 
 final technicianTaskRepositoryProvider = Provider<TechnicianTaskRepository>((ref) {
   return TechnicianTaskRepository(
     remoteDataSource: ref.watch(remoteDataSourceProvider),
+    localDataSource: ref.watch(localDataSourceProvider),
   );
 });
 
@@ -68,6 +71,10 @@ final serviceReportRepositoryProvider = Provider<ServiceReportRepository>((ref) 
     localDataSource: ref.watch(localDataSourceProvider),
     remoteDataSource: ref.watch(remoteDataSourceProvider),
   );
+});
+
+final customerNotificationRepositoryProvider = Provider<CustomerNotificationRepository>((ref) {
+  return CustomerNotificationRepository();
 });
 
 // ---------------------------------------------------------------------------
