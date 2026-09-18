@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:epremans/features/service_report/presentation/controllers/service_report_form_controller.dart';
 import 'package:epremans/data/providers/data_providers.dart';
-import 'package:epremans/models/service_report_model.dart';
+import 'package:epremans/features/service_report/presentation/controllers/service_report_form_controller.dart';
+import 'package:epremans/models/equipment_model.dart';
 import 'package:epremans/routes/app_router.dart';
 
 class SREquipmentInfoScreen extends ConsumerStatefulWidget {
@@ -36,25 +36,44 @@ class _SREquipmentInfoScreenState extends ConsumerState<SREquipmentInfoScreen> {
   
   Future<void> _loadInitialData() async {
     try {
-      // We get the technician ID from the current user
       final currentUser = ref.read(authControllerProvider).valueOrNull;
-      if (currentUser == null) throw Exception("Technician not authenticated");
-      
-      // Initialize the report state
+      if (currentUser == null) throw Exception('Technician not authenticated');
+
+      final task = await ref.read(technicianTaskRepositoryProvider).getTaskById(widget.taskId);
+      EquipmentModel? equipment;
+
+      try {
+        equipment = await ref.read(equipmentRepositoryProvider).getEquipmentById(task.id);
+      } catch (_) {
+        equipment = null;
+      }
+
+      final customerName = task.customerName ?? equipment?.customerName ?? '';
+      final customerAddress = task.customerAddress ?? equipment?.customerAddress ?? '';
+      final brand = task.equipmentBrand ?? equipment?.brand ?? '';
+      final typeModel = task.equipmentModel ?? equipment?.typeModel ?? '';
+      final serialNumber = equipment?.serialNumber ?? '';
+      final location = equipment?.location ?? '';
+
       ref.read(serviceReportFormProvider.notifier).initializeReport(
         taskId: widget.taskId,
         technicianId: currentUser.id,
+        customerName: customerName,
+        customerAddress: customerAddress,
+        brand: brand,
+        typeModel: typeModel,
+        serialNumber: serialNumber,
+        location: location,
       );
 
-      // Now we populate fields. Let's get mock data if possible
-      // This is a simplification for Phase 6. We can just use the task details.
-      // Let's assume we can resolve the equipment and customer from the task.
-      // We'll leave them empty if we can't find them, so the user can fill them.
-      
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        _customerNameCtrl.text = customerName;
+        _customerAddressCtrl.text = customerAddress;
+        _brandCtrl.text = brand;
+        _typeModelCtrl.text = typeModel;
+        _serialNumberCtrl.text = serialNumber;
+        _locationCtrl.text = location;
+        setState(() => _isLoading = false);
       }
     } catch (e) {
       if (mounted) {

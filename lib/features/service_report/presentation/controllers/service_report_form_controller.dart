@@ -134,7 +134,7 @@ class ServiceReportFormController extends StateNotifier<ServiceReportModel?> {
   /// Submits the final report to the repository.
   Future<void> submitReport() async {
     if (state == null) throw Exception("No active report.");
-    
+
     // Basic validation
     if (state!.serviceBegin == null) throw Exception("Service Begin is missing.");
     if (state!.serviceEnd == null) throw Exception("Service End is missing.");
@@ -143,7 +143,9 @@ class ServiceReportFormController extends StateNotifier<ServiceReportModel?> {
     }
 
     await repository.saveReportLocally(state!);
-    
-    // We don't clear state immediately so the completion screen can access the ID if needed.
+
+    // Match the expected controller contract: the in-memory report is cleared
+    // after a successful save so the workflow can restart cleanly.
+    state = null;
   }
 }

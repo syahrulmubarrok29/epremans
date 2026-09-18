@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:epremans/core/utils/cost_calculator.dart';
 import 'package:epremans/features/service_report/presentation/controllers/service_report_form_controller.dart';
 import 'package:epremans/routes/app_router.dart';
 
@@ -57,11 +58,26 @@ class _SRCostScreenState extends ConsumerState<SRCostScreen> {
     final tr = double.tryParse(_travelRateCtrl.text) ?? 0.0;
     final tc = double.tryParse(_travelCostCtrl.text) ?? 0.0;
     final oc = double.tryParse(_othersCostCtrl.text) ?? 0.0;
+    final currentParts = ref.read(serviceReportFormProvider)?.parts ?? const [];
+    final partsTotal = CostCalculator.calculatePartsTotal(currentParts);
 
     setState(() {
-      _laborSub = lh * lr;
-      _travelSub = th * tr;
-      _total = _laborSub + _travelSub + _partsTotal + tc + oc;
+      _laborSub = CostCalculator.calculateLaborSubtotal(
+        laborTimeHours: lh,
+        laborRate: lr,
+      );
+      _travelSub = CostCalculator.calculateTravelSubtotal(
+        travelTimeHours: th,
+        travelRate: tr,
+      );
+      _partsTotal = partsTotal;
+      _total = CostCalculator.calculateTotalCost(
+        laborSubtotal: _laborSub,
+        travelSubtotal: _travelSub,
+        partsTotal: _partsTotal,
+        travelCost: tc,
+        othersCost: oc,
+      );
     });
   }
 
