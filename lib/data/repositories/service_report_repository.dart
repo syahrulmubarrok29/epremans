@@ -26,7 +26,19 @@ class ServiceReportRepository {
 
   Future<List<ServiceReportModel>> getServiceReportsForTask(int taskId) async {
     final all = await localDataSource.getAllServiceReports();
-    return all.where((r) => r.taskId == taskId).toList();
+    final byTask = all.where((r) => r.taskId == taskId).toList();
+
+    final fullReports = <ServiceReportModel>[];
+    for (final report in byTask) {
+      final full = await localDataSource.getServiceReportById(report.id);
+      if (full != null) {
+        fullReports.add(full);
+      } else {
+        fullReports.add(report);
+      }
+    }
+
+    return fullReports;
   }
 
   /// Saves a report locally (e.g., Draft or Completed before sync)

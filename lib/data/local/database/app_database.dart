@@ -29,7 +29,6 @@ class AppDatabase {
   }
 
   Future<void> _onConfigure(Database db) async {
-    // Enable foreign keys
     await db.execute('PRAGMA foreign_keys = ON');
   }
 
@@ -41,5 +40,7 @@ class AppDatabase {
     await db.execute(DatabaseConstants.createTableTechnicianTasks);
     await db.execute(DatabaseConstants.createTableServiceReports);
     await db.execute(DatabaseConstants.createTableServiceReportParts);
+    await db.execute(DatabaseConstants.createTableDailyActivities);
+    await db.execute(DatabaseConstants.createTableQuotationRequests);
   }
 }

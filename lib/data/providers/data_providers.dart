@@ -13,6 +13,8 @@ import '../repositories/service_report_repository.dart';
 import '../repositories/service_request_repository.dart';
 import '../repositories/technician_task_repository.dart';
 import '../repositories/customer_notification_repository.dart';
+import '../repositories/daily_activity_repository.dart';
+import '../repositories/quotation_request_repository.dart';
 
 // ---------------------------------------------------------------------------
 // External Dependencies
@@ -75,6 +77,18 @@ final serviceReportRepositoryProvider = Provider<ServiceReportRepository>((ref) 
 
 final customerNotificationRepositoryProvider = Provider<CustomerNotificationRepository>((ref) {
   return CustomerNotificationRepository();
+});
+
+final dailyActivityRepositoryProvider = Provider<DailyActivityRepository>((ref) {
+  return DailyActivityRepository(
+    localDataSource: ref.watch(localDataSourceProvider),
+  );
+});
+
+final quotationRequestRepositoryProvider = Provider<QuotationRequestRepository>((ref) {
+  return QuotationRequestRepository(
+    localDataSource: ref.watch(localDataSourceProvider),
+  );
 });
 
 // ---------------------------------------------------------------------------

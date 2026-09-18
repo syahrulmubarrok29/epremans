@@ -132,6 +132,15 @@ class _TechnicianDashboardScreenState
                         onPressed: () => context.goNamed(AppRoutes.technicianTasks),
                       ),
                     ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.article_outlined),
+                        label: const Text('Daily Activity'),
+                        onPressed: () => context.goNamed(AppRoutes.technicianDailyActivity),
+                      ),
+                    ),
                     if (dashState.errorMessage != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 16),

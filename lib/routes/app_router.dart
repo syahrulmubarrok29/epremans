@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/constants/app_constants.dart';
 import '../data/providers/data_providers.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/customer/presentation/customer_dashboard_screen.dart';
@@ -26,6 +25,12 @@ import '../features/service_report/presentation/screens/sr_end_service_screen.da
 import '../features/service_report/presentation/screens/sr_signature_screen.dart';
 import '../features/service_report/presentation/screens/sr_review_screen.dart';
 import '../features/service_report/presentation/screens/sr_completed_screen.dart';
+import '../features/technician/presentation/daily_activity_detail_screen.dart';
+import '../features/technician/presentation/daily_activity_form_screen.dart';
+import '../features/technician/presentation/daily_activity_list_screen.dart';
+import '../features/technician/presentation/quotation_request_detail_screen.dart';
+import '../features/technician/presentation/quotation_request_form_screen.dart';
+import '../features/technician/presentation/quotation_request_list_screen.dart';
 
 // ---------------------------------------------------------------------------
 // Route name constants
@@ -57,7 +62,13 @@ class AppRoutes {
   static const String technicianTaskDetail = 'technician-task-detail';
   static const String technicianQrScan = 'technician-qr-scan';
   static const String technicianDailyActivity = 'technician-daily-activity';
+  static const String technicianDailyActivityDetail = 'technician-daily-activity-detail';
+  static const String technicianDailyActivityForm = 'technician-daily-activity-form';
+  static const String technicianDailyActivityEdit = 'technician-daily-activity-edit';
   static const String technicianQuotation = 'technician-quotation';
+  static const String technicianQuotationDetail = 'technician-quotation-detail';
+  static const String technicianQuotationForm = 'technician-quotation-form';
+  static const String technicianQuotationEdit = 'technician-quotation-edit';
 
   // Service Report flow
   static const String srEquipmentInfo = 'sr-equipment-info';
@@ -237,14 +248,54 @@ GoRouter createRouter(ProviderContainer container) {
       GoRoute(
         path: '/technician/daily-activity',
         name: AppRoutes.technicianDailyActivity,
-        builder: (context, state) =>
-            const _ComingSoonScreen(label: 'Daily Activity', phase: 6),
+        builder: (context, state) => const DailyActivityListScreen(),
+      ),
+      GoRoute(
+        path: '/technician/daily-activity/detail/:id',
+        name: AppRoutes.technicianDailyActivityDetail,
+        builder: (context, state) {
+          final id = int.parse(state.pathParameters['id']!);
+          return DailyActivityDetailScreen(activityId: id);
+        },
+      ),
+      GoRoute(
+        path: '/technician/daily-activity/form',
+        name: AppRoutes.technicianDailyActivityForm,
+        builder: (context, state) => const DailyActivityFormScreen(),
+      ),
+      GoRoute(
+        path: '/technician/daily-activity/form/:id',
+        name: AppRoutes.technicianDailyActivityEdit,
+        builder: (context, state) {
+          final id = int.parse(state.pathParameters['id']!);
+          return DailyActivityFormScreen(activityId: id);
+        },
       ),
       GoRoute(
         path: '/technician/quotation',
         name: AppRoutes.technicianQuotation,
-        builder: (context, state) =>
-            const _ComingSoonScreen(label: 'Request Quotation', phase: 6),
+        builder: (context, state) => const QuotationRequestListScreen(),
+      ),
+      GoRoute(
+        path: '/technician/quotation/detail/:id',
+        name: AppRoutes.technicianQuotationDetail,
+        builder: (context, state) {
+          final id = int.parse(state.pathParameters['id']!);
+          return QuotationRequestDetailScreen(requestId: id);
+        },
+      ),
+      GoRoute(
+        path: '/technician/quotation/form',
+        name: AppRoutes.technicianQuotationForm,
+        builder: (context, state) => const QuotationRequestFormScreen(),
+      ),
+      GoRoute(
+        path: '/technician/quotation/form/:id',
+        name: AppRoutes.technicianQuotationEdit,
+        builder: (context, state) {
+          final id = int.parse(state.pathParameters['id']!);
+          return QuotationRequestFormScreen(requestId: id);
+        },
       ),
 
       // -----------------------------------------------------------------------
@@ -343,53 +394,8 @@ class _AuthStateListenable extends ChangeNotifier {
 }
 
 // ---------------------------------------------------------------------------
-// Placeholder widgets (removed when feature is implemented)
+// Error page for unregistered routes
 // ---------------------------------------------------------------------------
-
-/// Shown for routes that belong to a future phase.
-class _ComingSoonScreen extends StatelessWidget {
-  const _ComingSoonScreen({required this.label, required this.phase});
-
-  final String label;
-  final int phase;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(label)),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.construction_rounded,
-                  size: 64, color: Color(0xFF1A3A5C)),
-              const SizedBox(height: 16),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.headlineSmall,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Coming in Phase $phase',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF5A6578),
-                    ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                AppConstants.appName,
-                style: Theme.of(context).textTheme.labelMedium,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 /// Shown when the router encounters an unregistered path.
 class _ErrorScreen extends StatelessWidget {

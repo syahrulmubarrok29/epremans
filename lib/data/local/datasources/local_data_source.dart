@@ -1,6 +1,8 @@
 import 'package:sqflite/sqflite.dart';
 
+import '../../../models/daily_activity_model.dart';
 import '../../../models/equipment_model.dart';
+import '../../../models/quotation_request_model.dart';
 import '../../../models/service_report_model.dart';
 import '../../../models/service_report_part_model.dart';
 import '../../../models/service_request_model.dart';
@@ -117,19 +119,90 @@ class LocalDataSource {
 
   Future<int> insertServiceReport(ServiceReportModel report) async {
     final db = await _db;
-    
-    // Insert report within a transaction to safely insert parts
-    return await db.transaction((txn) async {
-      final reportId = await txn.insert(
+
+    final reportId = await db.transaction((txn) async {
+      final userExists = Sqflite.firstIntValue(
+        await txn.rawQuery(
+          'SELECT 1 FROM ${DatabaseConstants.tableUsers} WHERE id = ?',
+          [report.technicianId],
+        ),
+      );
+      if (userExists == null) {
+        await txn.insert(
+          DatabaseConstants.tableUsers,
+          {
+            'id': report.technicianId,
+            'name': report.customerName,
+            'email': 'repair-${report.technicianId}@local.local',
+            'role': 'Technician',
+            'phone': null,
+            'created_at': DateTime.now().toIso8601String(),
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+
+      final serviceRequestExists = Sqflite.firstIntValue(
+        await txn.rawQuery(
+          'SELECT 1 FROM ${DatabaseConstants.tableServiceRequests} WHERE id = ?',
+          [report.taskId],
+        ),
+      );
+      if (serviceRequestExists == null) {
+        await txn.insert(
+          DatabaseConstants.tableServiceRequests,
+          {
+            'id': report.taskId,
+            'ticket_number': 'SR-${report.taskId}',
+            'customer_id': 1,
+            'equipment_id': 1,
+            'problem_description': report.problem ?? 'Service report entry',
+            'status': 'Completed',
+            'created_at': DateTime.now().toIso8601String(),
+            'customer_name': report.customerName,
+            'equipment_brand': report.brand,
+            'equipment_model': report.typeModel,
+            'technician_id': report.technicianId,
+            'technician_name': report.customerName,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+
+      final taskExists = Sqflite.firstIntValue(
+        await txn.rawQuery(
+          'SELECT 1 FROM ${DatabaseConstants.tableTechnicianTasks} WHERE id = ?',
+          [report.taskId],
+        ),
+      );
+      if (taskExists == null) {
+        await txn.insert(
+          DatabaseConstants.tableTechnicianTasks,
+          {
+            'id': report.taskId,
+            'service_request_id': report.taskId,
+            'technician_id': report.technicianId,
+            'assigned_at': DateTime.now().toIso8601String(),
+            'status': 'Completed',
+            'customer_name': report.customerName,
+            'customer_address': report.customerAddress,
+            'equipment_brand': report.brand,
+            'equipment_model': report.typeModel,
+            'problem_description': report.problem ?? 'Service report entry',
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+
+      final insertedId = await txn.insert(
         DatabaseConstants.tableServiceReports,
         report.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
-      // Insert all parts associated with this report
       for (final part in report.parts) {
         final partMap = part.toMap();
-        partMap['service_report_id'] = reportId;
+        partMap['service_report_id'] = insertedId;
         await txn.insert(
           DatabaseConstants.tableServiceReportParts,
           partMap,
@@ -137,8 +210,10 @@ class LocalDataSource {
         );
       }
 
-      return reportId;
+      return insertedId;
     });
+
+    return reportId;
   }
 
   Future<ServiceReportModel?> getServiceReportById(int id) async {
@@ -189,6 +264,114 @@ class LocalDataSource {
       DatabaseConstants.tableServiceReports,
       where: 'id = ?',
       whereArgs: [id],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Daily Activities
+  // ---------------------------------------------------------------------------
+
+  Future<int> insertDailyActivity(DailyActivityModel activity) async {
+    final db = await _db;
+    return await db.insert(
+      DatabaseConstants.tableDailyActivities,
+      activity.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<DailyActivityModel>> getDailyActivitiesByTechnician(int technicianId) async {
+    final db = await _db;
+    final results = await db.query(
+      DatabaseConstants.tableDailyActivities,
+      where: 'technician_id = ?',
+      whereArgs: [technicianId],
+      orderBy: 'activity_date DESC, created_at DESC',
+    );
+    return results.map((e) => DailyActivityModel.fromMap(e)).toList();
+  }
+
+  Future<DailyActivityModel?> getDailyActivityById(int id) async {
+    final db = await _db;
+    final results = await db.query(
+      DatabaseConstants.tableDailyActivities,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (results.isEmpty) return null;
+    return DailyActivityModel.fromMap(results.first);
+  }
+
+  Future<int> updateDailyActivity(DailyActivityModel activity, int technicianId) async {
+    final db = await _db;
+    return await db.update(
+      DatabaseConstants.tableDailyActivities,
+      activity.toMap(),
+      where: 'id = ? AND technician_id = ?',
+      whereArgs: [activity.id, technicianId],
+    );
+  }
+
+  Future<int> deleteDailyActivity(int id, {required int technicianId}) async {
+    final db = await _db;
+    return await db.delete(
+      DatabaseConstants.tableDailyActivities,
+      where: 'id = ? AND technician_id = ?',
+      whereArgs: [id, technicianId],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Quotation Requests
+  // ---------------------------------------------------------------------------
+
+  Future<int> insertQuotationRequest(QuotationRequestModel request) async {
+    final db = await _db;
+    return await db.insert(
+      DatabaseConstants.tableQuotationRequests,
+      request.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<QuotationRequestModel>> getQuotationRequestsByTechnician(int technicianId) async {
+    final db = await _db;
+    final results = await db.query(
+      DatabaseConstants.tableQuotationRequests,
+      where: 'technician_id = ?',
+      whereArgs: [technicianId],
+      orderBy: 'created_at DESC',
+    );
+    return results.map((e) => QuotationRequestModel.fromMap(e)).toList();
+  }
+
+  Future<QuotationRequestModel?> getQuotationRequestById(int id) async {
+    final db = await _db;
+    final results = await db.query(
+      DatabaseConstants.tableQuotationRequests,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (results.isEmpty) return null;
+    return QuotationRequestModel.fromMap(results.first);
+  }
+
+  Future<int> updateQuotationRequest(QuotationRequestModel request, int technicianId) async {
+    final db = await _db;
+    return await db.update(
+      DatabaseConstants.tableQuotationRequests,
+      request.toMap(),
+      where: 'id = ? AND technician_id = ?',
+      whereArgs: [request.id, technicianId],
+    );
+  }
+
+  Future<int> deleteQuotationRequest(int id, {required int technicianId}) async {
+    final db = await _db;
+    return await db.delete(
+      DatabaseConstants.tableQuotationRequests,
+      where: 'id = ? AND technician_id = ?',
+      whereArgs: [id, technicianId],
     );
   }
 }

@@ -3,7 +3,7 @@ class DatabaseConstants {
   DatabaseConstants._();
 
   static const String dbName = 'epremans_local.db';
-  static const int dbVersion = 1;
+  static const int dbVersion = 3;
 
   // ---------------------------------------------------------------------------
   // Table Names
@@ -15,13 +15,15 @@ class DatabaseConstants {
   static const String tableTechnicianTasks = 'technician_tasks';
   static const String tableServiceReports = 'service_reports';
   static const String tableServiceReportParts = 'service_report_parts';
+  static const String tableDailyActivities = 'daily_activities';
+  static const String tableQuotationRequests = 'quotation_requests';
 
   // ---------------------------------------------------------------------------
   // Create Table Statements
   // ---------------------------------------------------------------------------
 
   static const String createTableUsers = '''
-    CREATE TABLE $tableUsers (
+    CREATE TABLE IF NOT EXISTS $tableUsers (
       id INTEGER PRIMARY KEY,
       name TEXT NOT NULL,
       email TEXT NOT NULL,
@@ -32,7 +34,7 @@ class DatabaseConstants {
   ''';
 
   static const String createTableCustomers = '''
-    CREATE TABLE $tableCustomers (
+    CREATE TABLE IF NOT EXISTS $tableCustomers (
       id INTEGER PRIMARY KEY,
       name TEXT NOT NULL,
       address TEXT NOT NULL,
@@ -42,7 +44,7 @@ class DatabaseConstants {
   ''';
 
   static const String createTableEquipment = '''
-    CREATE TABLE $tableEquipment (
+    CREATE TABLE IF NOT EXISTS $tableEquipment (
       id INTEGER PRIMARY KEY,
       brand TEXT NOT NULL,
       type_model TEXT NOT NULL,
@@ -57,7 +59,7 @@ class DatabaseConstants {
   ''';
 
   static const String createTableServiceRequests = '''
-    CREATE TABLE $tableServiceRequests (
+    CREATE TABLE IF NOT EXISTS $tableServiceRequests (
       id INTEGER PRIMARY KEY,
       ticket_number TEXT NOT NULL,
       customer_id INTEGER NOT NULL,
@@ -77,7 +79,7 @@ class DatabaseConstants {
   ''';
 
   static const String createTableTechnicianTasks = '''
-    CREATE TABLE $tableTechnicianTasks (
+    CREATE TABLE IF NOT EXISTS $tableTechnicianTasks (
       id INTEGER PRIMARY KEY,
       service_request_id INTEGER NOT NULL,
       technician_id INTEGER NOT NULL,
@@ -96,7 +98,7 @@ class DatabaseConstants {
   ''';
 
   static const String createTableServiceReports = '''
-    CREATE TABLE $tableServiceReports (
+    CREATE TABLE IF NOT EXISTS $tableServiceReports (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       task_id INTEGER NOT NULL,
       technician_id INTEGER NOT NULL,
@@ -127,7 +129,7 @@ class DatabaseConstants {
   ''';
 
   static const String createTableServiceReportParts = '''
-    CREATE TABLE $tableServiceReportParts (
+    CREATE TABLE IF NOT EXISTS $tableServiceReportParts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       service_report_id INTEGER NOT NULL,
       part_number TEXT NOT NULL,
@@ -135,6 +137,36 @@ class DatabaseConstants {
       quantity INTEGER NOT NULL,
       unit_price REAL NOT NULL,
       FOREIGN KEY (service_report_id) REFERENCES $tableServiceReports(id) ON DELETE CASCADE
+    )
+  ''';
+
+  static const String createTableDailyActivities = '''
+    CREATE TABLE IF NOT EXISTS $tableDailyActivities (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      technician_id INTEGER NOT NULL,
+      activity_type TEXT NOT NULL,
+      method TEXT NOT NULL,
+      activity_date TEXT NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (technician_id) REFERENCES $tableUsers(id)
+    )
+  ''';
+
+  static const String createTableQuotationRequests = '''
+    CREATE TABLE IF NOT EXISTS $tableQuotationRequests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      technician_id INTEGER NOT NULL,
+      related_task_id INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      estimated_cost REAL NOT NULL,
+      status TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (technician_id) REFERENCES $tableUsers(id)
     )
   ''';
 }
